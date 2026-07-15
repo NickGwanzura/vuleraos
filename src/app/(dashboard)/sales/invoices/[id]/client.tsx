@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatDocumentHTML, openPrintWindow } from "@/lib/print";
 
 interface InvoiceItem {
   id: string;
@@ -136,6 +137,52 @@ function formatDateTime(dateStr: string) {
   });
 }
 
+function handlePrint(invoice: Invoice) {
+  const html = formatDocumentHTML(
+    "INVOICE",
+    invoice.invoiceNumber,
+    {
+      businessName: "",
+      bpNumber: null,
+      address: null,
+      city: null,
+      phone: null,
+      email: null,
+      primaryColor: "#1e40af",
+    },
+    {
+      label: "Bill To",
+      name: invoice.customer.name,
+      bp: invoice.customer.bpNumber,
+      email: invoice.customer.email,
+      phone: invoice.customer.phone,
+      address: invoice.customer.address,
+      city: invoice.customer.city,
+    },
+    invoice.items.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.lineTotal,
+    })),
+    {
+      subtotal: invoice.subtotal,
+      vatAmount: invoice.vatAmount,
+      vatRate: invoice.vatRate,
+      total: invoice.total,
+      amountPaid: invoice.amountPaid,
+      balanceDue: invoice.balanceDue,
+      currencySymbol: invoice.currency.symbol,
+    },
+    {
+      date: formatDate(invoice.issueDate),
+      dueDate: formatDate(invoice.dueDate),
+      notes: invoice.notes,
+    }
+  );
+  openPrintWindow(html);
+}
+
 export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
   const router = useRouter();
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -209,7 +256,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => handlePrint(invoice)}>
             <Printer className="h-4 w-4 mr-1" />
             Print
           </Button>

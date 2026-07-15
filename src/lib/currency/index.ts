@@ -135,3 +135,49 @@ export function formatPaymentMethod(method: string): string {
   };
   return labels[method] || method;
 }
+
+/**
+ * Inflation-adjusted value: restates a historical amount in today's currency equivalent.
+ */
+export function calculateInflationAdjustedValue(
+  historicalAmount: number,
+  historicalRate: number | null | undefined,
+  currentRate: number | null | undefined
+): { originalValue: number; currentValue: number; adjustmentPercent: number } | null {
+  if (!historicalRate || !currentRate || historicalRate <= 0 || currentRate <= 0) return null;
+  const currentValue = historicalAmount * (currentRate / historicalRate);
+  const adjustmentPercent = ((currentValue - historicalAmount) / historicalAmount) * 100;
+  return {
+    originalValue: historicalAmount,
+    currentValue: Math.round(currentValue * 100) / 100,
+    adjustmentPercent: Math.round(adjustmentPercent * 100) / 100,
+  };
+}
+
+/**
+ * Generate a dual-currency summary with inflation adjustment across transactions.
+ */
+export function generateInflationAdjustedSummary(
+  transactions: { amount: number; date: string; rateAtDate: number | null }[],
+  currentRate: number | null
+): { unadjustedTotal: number; adjustedTotal: number; realChangePercent: number } {
+  let unadjustedTotal = 0;
+  let adjustedTotal = 0;
+  for (const tx of transactions) {
+    unadjustedTotal += tx.amount;
+    if (tx.rateAtDate && currentRate) {
+      const adj = calculateInflationAdjustedValue(tx.amount, tx.rateAtDate, currentRate);
+      adjustedTotal += adj ? adj.currentValue : tx.amount;
+    } else {
+      adjustedTotal += tx.amount;
+    }
+  }
+  const realChangePercent = unadjustedTotal > 0
+    ? Math.round(((adjustedTotal - unadjustedTotal) / unadjustedTotal) * 10000) / 100
+    : 0;
+  return {
+    unadjustedTotal: Math.round(unadjustedTotal * 100) / 100,
+    adjustedTotal: Math.round(adjustedTotal * 100) / 100,
+    realChangePercent,
+  };
+}

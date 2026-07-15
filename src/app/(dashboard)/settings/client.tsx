@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ArrowLeft, Save, Building2, DollarSign, Printer, Users } from "lucide-react";
+import { ArrowLeft, Save, Building2, DollarSign, Printer, Users, FileText } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -80,6 +80,12 @@ export function SettingsPage({ tenant }: SettingsPageProps) {
         </Link>
         <Link href="/settings/fiscal-devices" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground flex items-center gap-2">
           <Printer className="h-4 w-4" /> Fiscal Devices
+        </Link>
+        <Link href="/settings/users" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground flex items-center gap-2">
+          <Users className="h-4 w-4" /> Users
+        </Link>
+        <Link href="/settings/documents" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground flex items-center gap-2">
+          <FileText className="h-4 w-4" /> Documents
         </Link>
       </div>
 

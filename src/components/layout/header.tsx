@@ -33,8 +33,12 @@ import {
   Building2,
   ShoppingCart,
   Package,
+  Wifi,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSyncManager } from "@/lib/offline";
 
 export function Header() {
   const { data: session } = useSession();
@@ -42,6 +46,7 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const { syncStatus, pendingCount, processQueue, isOnline } = useSyncManager();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -80,6 +85,38 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        {/* Sync Status */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => processQueue()}
+          title={
+            syncStatus === "offline"
+              ? "Offline — transactions will sync when connected"
+              : syncStatus === "syncing"
+                ? "Syncing..."
+                : pendingCount > 0
+                  ? `${pendingCount} pending — click to sync`
+                  : "Connected"
+          }
+        >
+          {isOnline ? (
+            pendingCount > 0 ? (
+              <RefreshCw className="h-4 w-4 text-amber-500" />
+            ) : (
+              <Wifi className="h-4 w-4 text-green-500" />
+            )
+          ) : (
+            <WifiOff className="h-4 w-4 text-red-500" />
+          )}
+          {pendingCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-amber-500 text-[8px] text-white flex items-center justify-center font-bold">
+              {pendingCount > 9 ? "9+" : pendingCount}
+            </span>
+          )}
+        </Button>
+
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
