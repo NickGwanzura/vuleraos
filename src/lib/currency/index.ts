@@ -1,0 +1,137 @@
+/**
+ * Currency utility for VuleraOS.
+ * Handles dual-currency display, conversion, and formatting for Zimbabwe.
+ */
+
+export interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  isBase: boolean;
+}
+
+export interface ExchangeRateInfo {
+  rate: number;
+  parallelMarketRate: number | null;
+  isManualOverride: boolean;
+}
+
+/**
+ * Format an amount in the given currency.
+ * USD: $1,234.56
+ * ZWG: ZiG 1,234.56
+ */
+export function formatCurrency(
+  amount: number,
+  currency: { code: string; symbol: string } | null | undefined
+): string {
+  if (!currency) return `$${amount.toFixed(2)}`;
+  
+  const formatted = amount.toLocaleString("en-ZW", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  if (currency.code === "USD") {
+    return `${currency.symbol}${formatted}`;
+  }
+  
+  // ZWG and others
+  return `${currency.symbol} ${formatted}`;
+}
+
+/**
+ * Convert an amount from one currency to another using the exchange rate.
+ */
+export function convertCurrency(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number | null | undefined
+): { amount: number; rate: number } | null {
+  if (!rate || rate <= 0) return null;
+  if (fromCurrency === toCurrency) return { amount, rate: 1 };
+
+  const converted = amount * rate;
+  return { amount: converted, rate };
+}
+
+/**
+ * Get the equivalent in the other primary currency (USD ↔ ZWG).
+ * Returns both values for side-by-side display.
+ */
+export function getDualDisplay(
+  amount: number,
+  currencyCode: string,
+  exchangeRate: { rate: number | null; parallelMarketRate?: number | null } | null | undefined
+): { primary: string; secondary: string | null } {
+  const primary = formatCurrency(amount, { code: currencyCode, symbol: currencyCode === "USD" ? "$" : "ZiG" });
+  
+  if (!exchangeRate?.rate) {
+    return { primary, secondary: null };
+  }
+
+  const rate = exchangeRate.rate;
+  let converted: number;
+  let targetCurrency: string;
+
+  if (currencyCode === "USD") {
+    converted = amount * rate;
+    targetCurrency = "ZWG";
+  } else if (currencyCode === "ZWG") {
+    converted = amount / rate;
+    targetCurrency = "USD";
+  } else {
+    return { primary, secondary: null };
+  }
+
+  const secondary = formatCurrency(converted, {
+    code: targetCurrency,
+    symbol: targetCurrency === "USD" ? "$" : "ZiG",
+  });
+
+  return { primary, secondary };
+}
+
+/**
+ * Common Zimbabwean bank list for dropdown selectors.
+ */
+export const ZIMBABWEAN_BANKS = [
+  "CBZ Bank",
+  "Stanbic Bank",
+  "Nedbank Zimbabwe",
+  "FBC Bank",
+  "Zanaco",
+  "ZABG",
+  "NBS Bank",
+  "Ecobank Zimbabwe",
+  "Standard Chartered Zimbabwe",
+  "First Capital Bank",
+  "African Century Bank",
+  "POSB",
+  "Metbank",
+  "CABS",
+  "Agribank",
+] as const;
+
+/**
+ * Mobile money prefixes for reference validation.
+ */
+export const MOBILE_MONEY_PREFIXES = {
+  ECOCASH: "EC",
+  ONEMONEY: "OM",
+} as const;
+
+/**
+ * Format a payment method for display.
+ */
+export function formatPaymentMethod(method: string): string {
+  const labels: Record<string, string> = {
+    ECOCASH: "EcoCash",
+    ONEMONEY: "OneMoney",
+    RTGS: "RTGS Transfer",
+    BANK_TRANSFER: "Bank Transfer",
+    CASH: "Cash",
+    OTHER: "Other",
+  };
+  return labels[method] || method;
+}
