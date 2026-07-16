@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { getCached, tenantCacheKey, invalidatePattern } from "@/lib/redis/cache";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +15,32 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get("categoryId");
     const isActive = searchParams.get("isActive");
     const lowStock = searchParams.get("lowStock") === "true";
+
+    // Use cache for non-search queries
+    if (!search && !categoryId && !lowStock) {
+      const cached = await getCached(
+        tenantCacheKey(user.tenantId, "stock:items"),
+        async () => {
+          const items = await prisma.item.findMany({
+            where: { tenantId: user.tenantId, isActive: true },
+            include: {
+              category: { select: { id: true, name: true } },
+              currency: { select: { code: true, symbol: true } },
+            },
+            orderBy: { name: "asc" },
+          });
+          return items.map((item) => ({
+            ...item,
+            defaultPrice: item.defaultPrice ? Number(item.defaultPrice) : null,
+            costPrice: item.costPrice ? Number(item.costPrice) : null,
+            currentStock: Number(item.currentStock),
+            minimumStock: item.minimumStock ? Number(item.minimumStock) : null,
+          }));
+        },
+        60
+      );
+      return NextResponse.json(cached);
+    }
 
     const where: any = { tenantId: user.tenantId };
 
@@ -100,6 +127,9 @@ export async function POST(request: Request) {
         currency: { select: { code: true, symbol: true } },
       },
     });
+
+    // Invalidate cache
+    await invalidatePattern(`*stock:items*`);
 
     return NextResponse.json(
       {

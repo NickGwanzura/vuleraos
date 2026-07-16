@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { getCached, tenantCacheKey } from "@/lib/redis/cache";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,14 +25,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Currency not found" }, { status: 404 });
     }
 
-    const latest = await prisma.exchangeRate.findFirst({
-      where: {
-        tenantId: user.tenantId,
-        fromCurrencyId: fromCur.id,
-        toCurrencyId: toCur.id,
+    const latest = await getCached(
+      tenantCacheKey(user.tenantId, "currency:latest", fromCurrency, toCurrency),
+      async () => {
+        const rate = await prisma.exchangeRate.findFirst({
+          where: {
+            tenantId: user.tenantId,
+            fromCurrencyId: fromCur.id,
+            toCurrencyId: toCur.id,
+          },
+          orderBy: { effectiveDate: "desc" },
+        });
+        return rate;
       },
-      orderBy: { effectiveDate: "desc" },
-    });
+      300 // 5 minute cache for exchange rates
+    );
 
     if (!latest) {
       return NextResponse.json({
