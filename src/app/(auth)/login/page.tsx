@@ -15,14 +15,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function login(email: string, password: string) {
     setIsLoading(true);
 
     try {
       const result = await signIn("credentials", {
-        email: form.email,
-        password: form.password,
+        email,
+        password,
         redirect: false,
       });
 
@@ -46,6 +45,15 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    login(form.email, form.password);
+  }
+
+  function handleDemoLogin() {
+    login("admin@mbaretraders.co.zw", "password123");
   }
 
   return (
@@ -90,6 +98,15 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={isLoading}
+              onClick={handleDemoLogin}
+            >
+              Try the demo
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Don&apos;t have an account?{" "}
