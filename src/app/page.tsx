@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { LandingPage } from "@/components/marketing/landing-page";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -11,5 +12,5 @@ export default async function Home() {
     redirect("/dashboard");
   }
 
-  redirect("/login");
+  return <LandingPage />;
 }
