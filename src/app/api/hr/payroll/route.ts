@@ -85,7 +85,19 @@ export async function POST(request: Request) {
       let totalDeductions = 0;
       let totalNet = 0;
 
-      const items = [];
+      const items: Array<{
+        tenantId: string;
+        employeeId: string;
+        grossPay: number;
+        payeTax: number;
+        nssaDeduction: number;
+        necDeduction: number;
+        aidDeduction: number;
+        otherDeductions: number;
+        totalDeductions: number;
+        netPay: number;
+        currencyId: string;
+      }> = [];
 
       for (const emp of employees) {
         const gross = Number(emp.basicSalary) || 0;
