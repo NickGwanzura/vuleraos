@@ -122,10 +122,10 @@ export function LandingPage() {
             <span className="text-base font-semibold">VuleraOS</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" render={<Link href="/login" />}>
+            <Button variant="ghost" nativeButton={false} render={<Link href="/login" />}>
               Sign in
             </Button>
-            <Button render={<Link href="/register" />}>
+            <Button nativeButton={false} render={<Link href="/register" />}>
               Register your business
             </Button>
           </div>
@@ -144,11 +144,11 @@ export function LandingPage() {
             ZIMRA compliance, and mobile money built in from the start.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" render={<Link href="/register" />}>
+            <Button size="lg" nativeButton={false} render={<Link href="/register" />}>
               Register your business
               <ArrowRight data-icon="inline-end" />
             </Button>
-            <Button size="lg" variant="outline" render={<Link href="/login" />}>
+            <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/login" />}>
               Try the demo
             </Button>
           </div>
@@ -248,11 +248,11 @@ export function LandingPage() {
               and reports already in place — no signup required.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button size="lg" render={<Link href="/login" />}>
+              <Button size="lg" nativeButton={false} render={<Link href="/login" />}>
                 Try the demo
                 <ArrowRight data-icon="inline-end" />
               </Button>
-              <Button size="lg" variant="outline" render={<Link href="/register" />}>
+              <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/register" />}>
                 Register your business
               </Button>
             </div>
