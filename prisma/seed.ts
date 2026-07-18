@@ -3,15 +3,20 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const DEMO_TENANT_ID = "00000000-0000-4000-8000-000000000001";
+const DEMO_OWNER_ID = "00000000-0000-4000-8000-000000000002";
+const DEMO_CASHIER_ID = "00000000-0000-4000-8000-000000000003";
+const DEMO_ACCOUNTANT_ID = "00000000-0000-4000-8000-000000000004";
+
 async function main() {
   console.log("🌱 Seeding VuleraOS database...");
 
   // Create demo tenant
   const tenant = await prisma.tenant.upsert({
-    where: { id: "demo-tenant-0001" },
+    where: { id: DEMO_TENANT_ID },
     update: {},
     create: {
-      id: "demo-tenant-0001",
+      id: DEMO_TENANT_ID,
       name: "Mbare Traders (Pvt) Ltd",
       businessType: "PRIVATE_LIMITED",
       bpNumber: "BP1234567",
@@ -50,27 +55,13 @@ async function main() {
 
   console.log("✓ Created currencies: USD, ZWG");
 
-  // Create exchange rate
-  await prisma.exchangeRate.create({
-    data: {
-      tenantId: tenant.id,
-      fromCurrencyId: usd.id,
-      toCurrencyId: zwg.id,
-      rate: 26.5,
-      parallelMarketRate: 32.0,
-      effectiveDate: new Date(),
-      isManualOverride: false,
-      createdByUserId: "demo-user-0001", // will be updated after user creation
-    },
-  });
-
   // Create demo owner user
   const passwordHash = await bcrypt.hash("password123", 12);
   const owner = await prisma.user.upsert({
-    where: { id: "demo-user-0001" },
+    where: { id: DEMO_OWNER_ID },
     update: {},
     create: {
-      id: "demo-user-0001",
+      id: DEMO_OWNER_ID,
       tenantId: tenant.id,
       email: "admin@mbaretraders.co.zw",
       name: "Tafadzwa Moyo",
@@ -82,12 +73,26 @@ async function main() {
 
   console.log(`✓ Created owner: ${owner.email} (password: password123)`);
 
+  // Create exchange rate
+  await prisma.exchangeRate.create({
+    data: {
+      tenantId: tenant.id,
+      fromCurrencyId: usd.id,
+      toCurrencyId: zwg.id,
+      rate: 26.5,
+      parallelMarketRate: 32.0,
+      effectiveDate: new Date(),
+      isManualOverride: false,
+      createdByUserId: owner.id,
+    },
+  });
+
   // Create demo cashier
   await prisma.user.upsert({
-    where: { id: "demo-user-0002" },
+    where: { id: DEMO_CASHIER_ID },
     update: {},
     create: {
-      id: "demo-user-0002",
+      id: DEMO_CASHIER_ID,
       tenantId: tenant.id,
       email: "cashier@mbaretraders.co.zw",
       name: "Chipo Dube",
@@ -101,10 +106,10 @@ async function main() {
 
   // Create demo accountant
   await prisma.user.upsert({
-    where: { id: "demo-user-0003" },
+    where: { id: DEMO_ACCOUNTANT_ID },
     update: {},
     create: {
-      id: "demo-user-0003",
+      id: DEMO_ACCOUNTANT_ID,
       tenantId: tenant.id,
       email: "accountant@mbaretraders.co.zw",
       name: "Tanaka Chidziva",
