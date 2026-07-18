@@ -38,8 +38,8 @@ export default async function AccountingPage() {
     }),
   ]);
 
-  const arTotal = arInvoices.reduce((sum: number, i) => sum + Number(i.balanceDue), 0);
-  const apTotal = apOrders.reduce((sum: number, o) => sum + Number(o.total), 0);
+  const arTotal = arInvoices.reduce((sum: number, i: { balanceDue: unknown }) => sum + Number(i.balanceDue), 0);
+  const apTotal = apOrders.reduce((sum: number, o: { total: unknown }) => sum + Number(o.total), 0);
 
   const serializedPayments = recentPayments.map((p) => ({
     id: p.id,
