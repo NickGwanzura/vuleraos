@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -36,9 +37,11 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
+  Menu,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSyncManager } from "@/lib/offline";
+import { useMobileSidebar } from "@/hooks/use-mobile-sidebar";
 
 export function Header() {
   const { data: session } = useSession();
@@ -47,6 +50,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const { syncStatus, pendingCount, processQueue, isOnline } = useSyncManager();
+  const toggleMobileSidebar = useMobileSidebar((state) => state.toggle);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -68,6 +72,17 @@ export function Header() {
 
   return (
     <header className="h-14 border-b bg-background flex items-center justify-between px-4 gap-4">
+      {/* Mobile nav trigger */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden flex-shrink-0"
+        onClick={toggleMobileSidebar}
+      >
+        <Menu className="h-4 w-4" />
+        <span className="sr-only">Toggle navigation</span>
+      </Button>
+
       {/* Global Search */}
       <div className="flex-1 max-w-md">
         <Button
@@ -144,14 +159,16 @@ export function Header() {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {session?.user?.tenantName}
-                </span>
-              </div>
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    {session?.user?.tenantName}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/settings")}>
               <User className="h-4 w-4 mr-2" />

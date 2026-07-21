@@ -14,11 +14,13 @@ export type SyncStatus = "online" | "offline" | "syncing" | "error";
  * Detect online/offline status.
  */
 export function useOnlineStatus(): { isOnline: boolean } {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== "undefined" ? navigator.onLine : true
-  );
+  // Always seed with `true` so the client's first render matches the
+  // server-rendered HTML; the real value is read after mount to avoid a
+  // hydration mismatch when the client happens to be offline at load time.
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
+    setIsOnline(navigator.onLine);
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener("online", handleOnline);

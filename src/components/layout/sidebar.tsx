@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,7 @@ function SidebarNav({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
 
   return (
@@ -92,20 +93,23 @@ function SidebarNav({
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href} onClick={onNavigate}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  size={collapsed ? "icon" : "sm"}
-                  className={cn(
-                    "w-full justify-start gap-2",
-                    collapsed && "justify-center px-0",
-                    isActive && "bg-sidebar-accent font-medium"
-                  )}
-                >
-                  {item.icon}
-                  {!collapsed && <span className="text-sm">{item.label}</span>}
-                </Button>
-              </Link>
+              <Button
+                key={item.href}
+                variant={isActive ? "secondary" : "ghost"}
+                size={collapsed ? "icon" : "sm"}
+                className={cn(
+                  "w-full justify-start gap-2",
+                  collapsed && "justify-center px-0",
+                  isActive && "bg-sidebar-accent font-medium"
+                )}
+                onClick={() => {
+                  router.push(item.href);
+                  onNavigate?.();
+                }}
+              >
+                {item.icon}
+                {!collapsed && <span className="text-sm">{item.label}</span>}
+              </Button>
             );
           })}
         </nav>
