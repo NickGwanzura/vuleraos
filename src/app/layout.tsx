@@ -10,7 +10,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "VuleraOS — Enterprise Resource Planning for Zimbabwe",
+  title: {
+    default: "VuleraOS: Enterprise Resource Planning for Zimbabwe",
+    template: "%s | VuleraOS",
+  },
   description:
     "Unlock your business potential. VuleraOS is a modern ERP system built for Zimbabwean businesses, with multi-currency support, ZIMRA compliance, and mobile money integration.",
   icons: { icon: "/favicon.ico" },

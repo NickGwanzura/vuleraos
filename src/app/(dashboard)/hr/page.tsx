@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma/client";
 import { redirect } from "next/navigation";
 import { HrWorkspace } from "./client";
+
+export const metadata: Metadata = { title: "HR" };
 
 export default async function HrPage() {
   const user = await getCurrentUser();

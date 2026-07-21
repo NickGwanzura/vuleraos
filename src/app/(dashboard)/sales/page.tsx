@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma/client";
 import { redirect } from "next/navigation";
 import { SalesWorkspace } from "./client";
+
+export const metadata: Metadata = { title: "Sales" };
 
 export default async function SalesPage() {
   const user = await getCurrentUser();

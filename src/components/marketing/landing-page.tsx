@@ -29,7 +29,7 @@ const modules = [
     icon: Receipt,
     title: "Sales & Invoicing",
     description:
-      "Raise fiscalised invoices, track payment status, and get paid via cash, bank, or EcoCash — all reconciled automatically.",
+      "Raise fiscalised invoices, track payment status, and get paid via cash, bank, or EcoCash, all reconciled automatically.",
   },
   {
     icon: ShoppingCart,
@@ -47,7 +47,7 @@ const modules = [
     icon: Users,
     title: "HR & Payroll",
     description:
-      "Employee records, payroll runs, and statutory processing — built around Zimbabwean payroll requirements.",
+      "Employee records, payroll runs, and statutory processing, built around Zimbabwean payroll requirements.",
   },
   {
     icon: Landmark,
@@ -101,7 +101,7 @@ const steps = [
     step: "2",
     title: "Configure stock & currencies",
     description:
-      "Add your items, categories, and exchange rates — or import them — so pricing is accurate from day one.",
+      "Add your items, categories, and exchange rates, or import them, so pricing is accurate from day one.",
   },
   {
     step: "3",
@@ -219,7 +219,7 @@ export function LandingPage() {
               </span>
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground text-balance">
-              VuleraOS is a modern ERP built for Zimbabwean businesses — sales,
+              VuleraOS is a modern ERP built for Zimbabwean businesses: sales,
               stock, HR, and accounting in one system, with multi-currency,
               ZIMRA compliance, and mobile money built in from the start.
             </p>
@@ -280,7 +280,7 @@ export function LandingPage() {
                   Built for how business actually works here
                 </h2>
                 <p className="mt-3 text-muted-foreground">
-                  Not a foreign ERP with local workarounds bolted on —
+                  Not a foreign ERP with local workarounds bolted on.
                   Zimbabwe&apos;s currency, tax, and payment landscape are the
                   starting point, not an afterthought.
                 </p>
@@ -352,8 +352,8 @@ export function LandingPage() {
                 See it running with real data
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-                Explore a fully seeded demo business — invoices, stock, payroll,
-                and reports already in place — no signup required.
+                Explore a fully seeded demo business with invoices, stock,
+                payroll, and reports already in place. No signup required.
               </p>
             </AnimatedSection>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -366,7 +366,7 @@ export function LandingPage() {
                 <ArrowRight data-icon="inline-end" />
               </Button>
               <Button size="lg" variant="outline" onClick={() => router.push("/register")}>
-                Register your business
+                Get started free
               </Button>
             </div>
           </div>
