@@ -4,6 +4,13 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma/client";
 
+function getIpFromHeaders(headers?: Headers): string | undefined {
+  if (!headers) return undefined;
+  const forwarded = headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]?.trim();
+  return headers.get("x-real-ip") ?? undefined;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: {
@@ -85,6 +92,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.onboardingCompleted = token.onboardingCompleted as boolean;
       }
       return session;
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      if (!user.id || !(user as any).tenantId) return;
+      try {
+        await prisma.auditLog.create({
+          data: {
+            tenantId: (user as any).tenantId,
+            userId: user.id,
+            action: "sign_in",
+            entityType: "user",
+            entityId: user.id,
+            changes: { email: user.email },
+          },
+        });
+      } catch {
+        // Audit logging failure should not block auth
+      }
+    },
+    async signOut(message) {
+      // With JWT strategy, the message contains the token
+      if ("token" in message && message.token) {
+        const token = message.token as any;
+        if (!token.id || !token.tenantId) return;
+        try {
+          await prisma.auditLog.create({
+            data: {
+              tenantId: token.tenantId,
+              userId: token.id,
+              action: "sign_out",
+              entityType: "user",
+              entityId: token.id,
+              changes: { email: token.email },
+            },
+          });
+        } catch {
+          // Audit logging failure should not block auth
+        }
+      }
     },
   },
 });
