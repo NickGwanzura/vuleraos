@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   BadgeCheck,
@@ -162,6 +162,7 @@ function AnimatedCard({
 }
 
 export function LandingPage() {
+  const router = useRouter();
   const heroRef = useScrollAnimate();
 
   return (
@@ -178,10 +179,10 @@ export function LandingPage() {
             <span className="text-base font-semibold">VuleraOS</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" nativeButton={false} render={<Link href="/login" />}>
+            <Button variant="ghost" onClick={() => router.push("/login")}>
               Sign in
             </Button>
-            <Button nativeButton={false} render={<Link href="/register" />}>
+            <Button onClick={() => router.push("/register")}>
               Register your business
             </Button>
           </div>
@@ -226,13 +227,12 @@ export function LandingPage() {
               <Button
                 size="lg"
                 className="shadow-lg shadow-primary/25 transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/30"
-                nativeButton={false}
-                render={<Link href="/register" />}
+                onClick={() => router.push("/register")}
               >
                 Register your business
                 <ArrowRight data-icon="inline-end" />
               </Button>
-              <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/login" />}>
+              <Button size="lg" variant="outline" onClick={() => router.push("/login")}>
                 Try the demo
               </Button>
             </div>
@@ -360,13 +360,12 @@ export function LandingPage() {
               <Button
                 size="lg"
                 className="shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30"
-                nativeButton={false}
-                render={<Link href="/login" />}
+                onClick={() => router.push("/login")}
               >
                 Try the demo
                 <ArrowRight data-icon="inline-end" />
               </Button>
-              <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/register" />}>
+              <Button size="lg" variant="outline" onClick={() => router.push("/register")}>
                 Register your business
               </Button>
             </div>
