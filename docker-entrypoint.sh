@@ -12,5 +12,16 @@ set -e
 # that one known failure mode is simpler and avoids that whole class of bug.)
 npx prisma migrate resolve --applied 20260101000000_baseline || true
 
+# A prior deploy of this repo shipped a corrupted 20260722010000_add_p2_controls
+# migration file (CLI warning text accidentally merged into the .sql), which
+# Postgres rejected outright, leaving it recorded as failed and blocking all
+# further migrations. The file is now fixed and every statement in it is
+# idempotent (IF NOT EXISTS / duplicate_object-safe), so it's safe to clear
+# that failed record and let it re-run regardless of whatever partially
+# landed before. This is a one-time recovery step, safe to leave in
+# permanently: once resolved, retrying it fails harmlessly (no failed record
+# to clear) and this is ignored the same way as the baseline resolve above.
+npx prisma migrate resolve --rolled-back 20260722010000_add_p2_controls || true
+
 npx prisma migrate deploy
 exec npm run start

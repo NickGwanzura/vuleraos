@@ -1,18 +1,16 @@
-warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
-For more information, see: https://pris.ly/prisma-config
-
 -- AlterEnum
-ALTER TYPE "payroll_status" ADD VALUE 'PENDING_APPROVAL';
+ALTER TYPE "payroll_status" ADD VALUE IF NOT EXISTS 'PENDING_APPROVAL';
 
 -- AlterTable
-ALTER TABLE "tenants" ADD COLUMN     "periodLockDate" TIMESTAMP(3),
-ADD COLUMN     "poApprovalThreshold" DECIMAL(18,2);
+ALTER TABLE "tenants"
+  ADD COLUMN IF NOT EXISTS "periodLockDate" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "poApprovalThreshold" DECIMAL(18,2);
 
 -- AlterTable
-ALTER TABLE "payroll_runs" ADD COLUMN     "approvedById" UUID;
+ALTER TABLE "payroll_runs" ADD COLUMN IF NOT EXISTS "approvedById" UUID;
 
 -- CreateTable
-CREATE TABLE "number_sequences" (
+CREATE TABLE IF NOT EXISTS "number_sequences" (
     "id" UUID NOT NULL,
     "tenantId" UUID NOT NULL,
     "key" TEXT NOT NULL,
@@ -23,11 +21,16 @@ CREATE TABLE "number_sequences" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "number_sequences_tenantId_key_year_key" ON "number_sequences"("tenantId", "key", "year");
+CREATE UNIQUE INDEX IF NOT EXISTS "number_sequences_tenantId_key_year_key" ON "number_sequences"("tenantId", "key", "year");
 
 -- AddForeignKey
-ALTER TABLE "payroll_runs" ADD CONSTRAINT "payroll_runs_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "payroll_runs" ADD CONSTRAINT "payroll_runs_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "number_sequences" ADD CONSTRAINT "number_sequences_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
+DO $$ BEGIN
+  ALTER TABLE "number_sequences" ADD CONSTRAINT "number_sequences_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
