@@ -17,8 +17,11 @@ export async function PUT(
     const body = await request.json();
     const { status } = body;
 
+    // DRAFT -> FISCAL is deliberately not offered here: fiscalising must go
+    // through PUT .../fiscalise, which validates ZIMRA compliance, generates
+    // the fiscal receipt number, and posts the journal entry.
     const validTransitions: Record<string, string[]> = {
-      DRAFT: ["FISCAL", "CANCELLED"],
+      DRAFT: ["CANCELLED"],
       FISCAL: ["PAID", "PARTIALLY_PAID", "OVERDUE", "CANCELLED"],
       PARTIALLY_PAID: ["PAID", "OVERDUE", "CANCELLED"],
       OVERDUE: ["PAID", "PARTIALLY_PAID", "CANCELLED"],
@@ -70,6 +73,17 @@ export async function PUT(
           });
         }
       }
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: user.tenantId,
+          userId: user.id,
+          action: "status_change",
+          entityType: "sales_invoice",
+          entityId: id,
+          changes: { status, previousStatus: invoice.status },
+        },
+      });
 
       return updated;
     });

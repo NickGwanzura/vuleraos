@@ -5,6 +5,7 @@
  */
 
 import type { Prisma } from "@prisma/client";
+import { nextSequenceNumber } from "@/lib/sequence";
 
 export interface JournalLineInput {
   accountId: string;
@@ -40,33 +41,57 @@ export async function postJournalEntry(
   input: PostJournalEntryInput
 ) {
   const { tenantId, lines } = input;
+  const entryDate = input.entryDate ?? new Date();
+
+  const tenant = await tx.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+  if (tenant.periodLockDate && entryDate <= tenant.periodLockDate) {
+    throw new Error(
+      `Cannot post to ${entryDate.toISOString().split("T")[0]} — the books are locked on or before ${tenant.periodLockDate.toISOString().split("T")[0]}.`
+    );
+  }
 
   if (lines.length < 2) {
     throw new Error("A journal entry needs at least two lines.");
   }
 
+  // Debits and credits must balance within each currency separately — the
+  // ledger doesn't consolidate currencies (see JournalLine comment), so a
+  // global cross-currency sum would let mismatched amounts in different
+  // currencies "balance" each other, which is meaningless.
+  const byCurrency = new Map<string, { debit: number; credit: number }>();
   let debitCents = 0;
   let creditCents = 0;
   for (const line of lines) {
     if (line.amount <= 0) {
       throw new Error("Journal line amounts must be positive.");
     }
-    if (line.direction === "debit") debitCents += toCents(line.amount);
-    else creditCents += toCents(line.amount);
+    const cents = toCents(line.amount);
+    const bucket = byCurrency.get(line.currencyId) ?? { debit: 0, credit: 0 };
+    if (line.direction === "debit") {
+      debitCents += cents;
+      bucket.debit += cents;
+    } else {
+      creditCents += cents;
+      bucket.credit += cents;
+    }
+    byCurrency.set(line.currencyId, bucket);
   }
-  if (debitCents !== creditCents) {
-    throw new Error(
-      `Journal entry does not balance: debits ${debitCents / 100} vs credits ${creditCents / 100}.`
-    );
+  for (const [currencyId, bucket] of byCurrency) {
+    if (bucket.debit !== bucket.credit) {
+      throw new Error(
+        `Journal entry does not balance for currency ${currencyId}: debits ${bucket.debit / 100} vs credits ${bucket.credit / 100}.`
+      );
+    }
   }
 
-  const entryNumber = await generateEntryNumber(tx, tenantId, input.entryDate ?? new Date());
+  const seq = await nextSequenceNumber(tx, tenantId, "journal_entry", entryDate.getFullYear());
+  const entryNumber = `JE-${entryDate.getFullYear()}-${String(seq).padStart(4, "0")}`;
 
   const entry = await tx.journalEntry.create({
     data: {
       tenantId,
       entryNumber,
-      entryDate: input.entryDate ?? new Date(),
+      entryDate,
       memo: input.memo,
       sourceType: input.sourceType,
       sourceId: input.sourceId ?? null,
@@ -86,22 +111,23 @@ export async function postJournalEntry(
     include: { lines: true },
   });
 
-  return entry;
-}
-
-async function generateEntryNumber(
-  tx: Prisma.TransactionClient,
-  tenantId: string,
-  entryDate: Date
-) {
-  const year = entryDate.getFullYear();
-  const count = await tx.journalEntry.count({
-    where: {
+  await tx.auditLog.create({
+    data: {
       tenantId,
-      entryNumber: { startsWith: `JE-${year}-` },
+      userId: input.postedById,
+      action: "post",
+      entityType: "journal_entry",
+      entityId: entry.id,
+      changes: {
+        entryNumber: entry.entryNumber,
+        sourceType: entry.sourceType,
+        sourceId: entry.sourceId,
+        totalDebit: debitCents / 100,
+      },
     },
   });
-  return `JE-${year}-${String(count + 1).padStart(4, "0")}`;
+
+  return entry;
 }
 
 /**
@@ -144,6 +170,19 @@ export async function reverseJournalEntry(
   await tx.journalEntry.update({
     where: { id: original.id },
     data: { status: "REVERSED" },
+  });
+
+  await tx.auditLog.create({
+    data: {
+      tenantId: params.tenantId,
+      userId: params.postedById,
+      action: "reverse",
+      entityType: "journal_entry",
+      entityId: original.id,
+      changes: {
+        reversedBy: reversal?.entryNumber,
+      },
+    },
   });
 
   return reversal;

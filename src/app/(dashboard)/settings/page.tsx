@@ -14,5 +14,14 @@ export default async function SettingsHome() {
     where: { id: user.tenantId },
   });
 
-  return <SettingsPage tenant={tenant} />;
+  const serializedTenant = tenant
+    ? {
+        ...tenant,
+        poApprovalThreshold:
+          tenant.poApprovalThreshold !== null ? Number(tenant.poApprovalThreshold) : null,
+        periodLockDate: tenant.periodLockDate ? tenant.periodLockDate.toISOString() : null,
+      }
+    : null;
+
+  return <SettingsPage tenant={serializedTenant} />;
 }

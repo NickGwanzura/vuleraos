@@ -17,6 +17,8 @@ interface Tenant {
   bpNumber: string | null;
   registrationNumber: string | null;
   defaultCurrency: string;
+  poApprovalThreshold: number | null;
+  periodLockDate: string | null;
 }
 
 interface SettingsPageProps {
@@ -32,6 +34,8 @@ export function SettingsPage({ tenant }: SettingsPageProps) {
     registrationNumber: tenant?.registrationNumber || "",
     businessType: tenant?.businessType || "SOLE_TRADER",
     defaultCurrency: tenant?.defaultCurrency || "USD",
+    poApprovalThreshold: tenant?.poApprovalThreshold?.toString() || "",
+    periodLockDate: tenant?.periodLockDate ? tenant.periodLockDate.split("T")[0] : "",
   });
 
   const BUSINESS_TYPES = [
@@ -133,6 +137,48 @@ export function SettingsPage({ tenant }: SettingsPageProps) {
                 <option value="USD">USD ($) — US Dollar</option>
                 <option value="ZWG">ZWG (ZiG) — Zimbabwe Gold</option>
               </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4 max-w-lg">
+            <div>
+              <h2 className="text-sm font-semibold">Accounting Controls</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Owner/accountant only. Changes affect how postings and approvals are enforced.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="periodLockDate">
+                Period Lock Date
+                <span className="text-xs text-muted-foreground ml-2">No postings on or before this date</span>
+              </Label>
+              <Input
+                id="periodLockDate"
+                type="date"
+                value={form.periodLockDate}
+                onChange={(e) => setForm({ ...form, periodLockDate: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="poApprovalThreshold">
+                PO Approval Threshold
+                <span className="text-xs text-muted-foreground ml-2">
+                  POs below this amount skip approval. Leave blank to require approval on every PO.
+                </span>
+              </Label>
+              <Input
+                id="poApprovalThreshold"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="No threshold — always require approval"
+                value={form.poApprovalThreshold}
+                onChange={(e) => setForm({ ...form, poApprovalThreshold: e.target.value })}
+              />
             </div>
           </div>
         </CardContent>

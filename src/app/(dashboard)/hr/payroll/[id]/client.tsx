@@ -33,6 +33,7 @@ interface PayrollDetailProps { payroll: PayrollDetailData }
 function getStatusBadge(status: string): string {
   const m: Record<string, string> = {
     DRAFT: "bg-muted text-muted-foreground",
+    PENDING_APPROVAL: "bg-amber-100 text-amber-800",
     PROCESSED: "bg-blue-100 text-blue-800",
     PAID: "bg-green-100 text-green-800",
     CANCELLED: "bg-gray-100 text-gray-500",
@@ -59,6 +60,19 @@ export function PayrollDetail({ payroll }: PayrollDetailProps) {
       const res = await fetch(`/api/hr/payroll/${payroll.id}/process`, { method: "PUT" });
       if (!res.ok) { const d = await res.json(); toast.error(d.error || "Failed"); return; }
       toast.success("Payroll processed");
+      router.refresh();
+    } catch { toast.error("An error occurred"); }
+    finally { setProcessing(false); }
+  }
+
+  async function handleApprove() {
+    setProcessing(true);
+    try {
+      const res = await fetch(`/api/hr/payroll/${payroll.id}/status`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "PROCESSED" }),
+      });
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || "Failed"); return; }
+      toast.success("Payroll approved");
       router.refresh();
     } catch { toast.error("An error occurred"); }
     finally { setProcessing(false); }
@@ -93,7 +107,8 @@ export function PayrollDetail({ payroll }: PayrollDetailProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          {payroll.status === "DRAFT" && <Button onClick={handleProcess} disabled={processing}>{processing ? "Processing..." : "Process Payroll"}</Button>}
+          {payroll.status === "DRAFT" && <Button onClick={handleProcess} disabled={processing}>{processing ? "Submitting..." : "Submit for Approval"}</Button>}
+          {payroll.status === "PENDING_APPROVAL" && <Button onClick={handleApprove} disabled={processing}><CheckCircle className="h-4 w-4 mr-1" />{processing ? "Approving..." : "Approve Payroll"}</Button>}
           {payroll.status === "PROCESSED" && <Button onClick={handleMarkPaid} disabled={processing}><CheckCircle className="h-4 w-4 mr-1" />Mark as Paid</Button>}
         </div>
       </div>

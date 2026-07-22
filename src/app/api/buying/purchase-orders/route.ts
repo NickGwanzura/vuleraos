@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { nextSequenceNumber } from "@/lib/sequence";
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,15 +70,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "At least one line item is required" }, { status: 400 });
     }
 
-    // Generate PO number
     const year = new Date().getFullYear();
-    const count = await prisma.purchaseOrder.count({
-      where: {
-        tenantId: user.tenantId,
-        poNumber: { startsWith: `PO-${year}-` },
-      },
-    });
-    const poNumber = `PO-${year}-${String(count + 1).padStart(4, "0")}`;
 
     // Calculate totals
     let subtotal = 0;
@@ -100,6 +93,9 @@ export async function POST(request: Request) {
     const total = subtotal;
 
     const order = await prisma.$transaction(async (tx) => {
+      const seq = await nextSequenceNumber(tx, user.tenantId, "po", year);
+      const poNumber = `PO-${year}-${String(seq).padStart(4, "0")}`;
+
       const po = await tx.purchaseOrder.create({
         data: {
           tenantId: user.tenantId,

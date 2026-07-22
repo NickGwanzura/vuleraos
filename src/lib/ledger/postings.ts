@@ -15,6 +15,7 @@ interface InvoiceForPosting {
   customerId: string;
   currencyId: string;
   exchangeRateId: string | null;
+  issueDate: Date;
   subtotal: Prisma.Decimal | number;
   vatAmount: Prisma.Decimal | number;
   total: Prisma.Decimal | number;
@@ -66,6 +67,7 @@ export async function postInvoiceFiscalised(
 
   return postJournalEntry(tx, {
     tenantId: invoice.tenantId,
+    entryDate: invoice.issueDate,
     memo: "Invoice fiscalised",
     sourceType: "sales_invoice",
     sourceId: invoice.id,
@@ -93,6 +95,7 @@ interface PaymentForPosting {
   currencyId: string;
   exchangeRateId: string | null;
   paymentMethod: string;
+  receivedAt: Date;
   invoice?: { customerId: string } | null;
 }
 
@@ -112,6 +115,7 @@ export async function postPaymentReceived(
 
   return postJournalEntry(tx, {
     tenantId: payment.tenantId,
+    entryDate: payment.receivedAt,
     memo: "Payment received",
     sourceType: "payment",
     sourceId: payment.id,
@@ -215,6 +219,7 @@ interface PayrollRunForPosting {
   id: string;
   tenantId: string;
   currencyId: string;
+  periodEnd: Date;
   totalGross: Prisma.Decimal | number;
   totalNet: Prisma.Decimal | number;
   totalPaye: Prisma.Decimal | number;
@@ -256,6 +261,7 @@ export async function postPayrollAccrual(
 
   return postJournalEntry(tx, {
     tenantId: run.tenantId,
+    entryDate: run.periodEnd,
     memo: "Payroll accrual",
     sourceType: "payroll_run",
     sourceId: run.id,

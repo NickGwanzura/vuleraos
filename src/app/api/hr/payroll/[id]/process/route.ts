@@ -3,7 +3,9 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
 
 /**
- * Process a draft payroll: recalculate all deductions and mark as PROCESSED.
+ * Submit a draft payroll for approval. Actually posting the accrual happens
+ * at approval time (PUT .../status, PENDING_APPROVAL -> PROCESSED), not here
+ * — this only flips the status so a distinct approver can review it first.
  */
 export async function PUT(
   _request: NextRequest,
@@ -28,14 +30,29 @@ export async function PUT(
 
     if (run.status !== "DRAFT") {
       return NextResponse.json(
-        { error: `Cannot process a ${run.status.toLowerCase()} payroll` },
+        { error: `Cannot submit a ${run.status.toLowerCase()} payroll for approval` },
         { status: 400 }
       );
     }
 
-    const updated = await prisma.payrollRun.update({
-      where: { id },
-      data: { status: "PROCESSED" },
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.payrollRun.update({
+        where: { id },
+        data: { status: "PENDING_APPROVAL" },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: user.tenantId,
+          userId: user.id,
+          action: "status_change",
+          entityType: "payroll_run",
+          entityId: id,
+          changes: { status: "PENDING_APPROVAL", previousStatus: "DRAFT" },
+        },
+      });
+
+      return updated;
     });
 
     return NextResponse.json({ id: updated.id, status: updated.status });

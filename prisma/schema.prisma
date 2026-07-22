@@ -17,6 +17,8 @@ model Tenant {
   registrationNumber  String?
   defaultCurrency     String   @default("USD")
   isActive            Boolean  @default(true)
+  poApprovalThreshold Decimal? @db.Decimal(18, 2)
+  periodLockDate      DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -38,6 +40,7 @@ model Tenant {
   documentTemplates  DocumentTemplate[]
   ledgerAccounts     LedgerAccount[]
   journalEntries     JournalEntry[]
+  numberSequences    NumberSequence[]
 
   @@map("tenants")
 }
@@ -76,6 +79,7 @@ model User {
   createdPOs      PurchaseOrder[]       @relation("POCreatedBy")
   approvedPOs     PurchaseOrder[]       @relation("POApprovedBy")
   processedPayrolls PayrollRun[] @relation("PayrollProcessedBy")
+  approvedPayrolls  PayrollRun[] @relation("PayrollApprovedBy")
   stockTransactions StockTransaction[]
   auditLogs       AuditLog[]
   notifications   Notification[]
@@ -550,6 +554,7 @@ model PayrollRun {
   totalAid    Decimal       @default(0) @db.Decimal(18, 2)
   currencyId  String        @db.Uuid
   processedById String      @db.Uuid
+  approvedById String?     @db.Uuid
   notes       String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -557,6 +562,7 @@ model PayrollRun {
   tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   currency     Currency      @relation(fields: [currencyId], references: [id])
   processedBy  User          @relation("PayrollProcessedBy", fields: [processedById], references: [id])
+  approvedBy   User?         @relation("PayrollApprovedBy", fields: [approvedById], references: [id])
   items        PayrollItem[]
 
   @@map("payroll_runs")
@@ -564,6 +570,7 @@ model PayrollRun {
 
 enum PayrollStatus {
   DRAFT
+  PENDING_APPROVAL
   PROCESSED
   PAID
   CANCELLED
@@ -593,6 +600,19 @@ model PayrollItem {
 }
 
 // ============ GENERAL LEDGER ============
+
+model NumberSequence {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  key      String // invoice, po, fiscal_receipt, journal_entry
+  year     Int
+  value    Int    @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key, year])
+  @@map("number_sequences")
+}
 
 model LedgerAccount {
   id              String      @id @default(uuid()) @db.Uuid

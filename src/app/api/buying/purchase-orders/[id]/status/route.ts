@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
 import { reversePOPostings } from "@/lib/ledger/postings";
 
+const APPROVER_ROLES = ["OWNER", "ADMIN", "ACCOUNTANT"];
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,17 +19,23 @@ export async function PUT(
     const body = await request.json();
     const { status } = body;
 
+    // DRAFT -> APPROVED is only reachable directly when the PO is under the
+    // tenant's approval threshold (checked below); otherwise it must go
+    // through PENDING_APPROVAL first.
     const validTransitions: Record<string, string[]> = {
-      DRAFT: ["PENDING_APPROVAL", "CANCELLED"],
+      DRAFT: ["PENDING_APPROVAL", "APPROVED", "CANCELLED"],
       PENDING_APPROVAL: ["APPROVED", "DRAFT", "CANCELLED"],
       APPROVED: ["PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"],
       PARTIALLY_RECEIVED: ["RECEIVED", "CANCELLED"],
     };
 
-    const po = await prisma.purchaseOrder.findFirst({
-      where: { id, tenantId: user.tenantId },
-      include: { items: true },
-    });
+    const [po, tenant] = await Promise.all([
+      prisma.purchaseOrder.findFirst({
+        where: { id, tenantId: user.tenantId },
+        include: { items: true },
+      }),
+      prisma.tenant.findUniqueOrThrow({ where: { id: user.tenantId } }),
+    ]);
     if (!po) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -37,6 +45,33 @@ export async function PUT(
         { error: `Cannot transition from ${po.status} to ${status}` },
         { status: 400 }
       );
+    }
+
+    if (status === "APPROVED") {
+      const threshold = tenant.poApprovalThreshold ? Number(tenant.poApprovalThreshold) : null;
+      if (po.status === "DRAFT") {
+        // Direct DRAFT -> APPROVED shortcut: only allowed under threshold.
+        if (threshold === null || Number(po.total) >= threshold) {
+          return NextResponse.json(
+            { error: "This purchase order requires approval — submit it for approval first." },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Real approval from PENDING_APPROVAL: role + segregation of duties.
+        if (!APPROVER_ROLES.includes(user.role)) {
+          return NextResponse.json(
+            { error: "Only an owner, admin, or accountant can approve purchase orders." },
+            { status: 403 }
+          );
+        }
+        if (user.id === po.createdById) {
+          return NextResponse.json(
+            { error: "A purchase order must be approved by someone other than its creator." },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     const updateData: any = { status };
@@ -87,6 +122,17 @@ export async function PUT(
           postedById: user.id,
         });
       }
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: user.tenantId,
+          userId: user.id,
+          action: "status_change",
+          entityType: "purchase_order",
+          entityId: id,
+          changes: { status, previousStatus: po.status },
+        },
+      });
 
       return updated;
     });

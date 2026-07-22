@@ -189,6 +189,27 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [fiscalising, setFiscalising] = useState(false);
+
+  async function handleFiscalise() {
+    setFiscalising(true);
+    try {
+      const res = await fetch(`/api/sales/invoices/${invoice.id}/fiscalise`, {
+        method: "PUT",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to fiscalise invoice");
+        return;
+      }
+      toast.success("Invoice fiscalised");
+      router.refresh();
+    } catch {
+      toast.error("An error occurred");
+    } finally {
+      setFiscalising(false);
+    }
+  }
 
   const canEdit = !["PAID", "CANCELLED"].includes(invoice.status);
   const isOverdue = invoice.status !== "PAID" && invoice.status !== "CANCELLED" &&
@@ -261,6 +282,12 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
             <Printer className="h-4 w-4 mr-1" />
             Print
           </Button>
+          {invoice.status === "DRAFT" && (
+            <Button size="sm" onClick={handleFiscalise} disabled={fiscalising}>
+              <CheckCircle className="h-4 w-4 mr-1" />
+              {fiscalising ? "Fiscalising..." : "Fiscalise"}
+            </Button>
+          )}
           {canEdit && (
             <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
               <DialogTrigger className="outline-none cursor-pointer">
@@ -283,8 +310,6 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="FISCAL">Fiscal (Issue Invoice)</SelectItem>
-                      <SelectItem value="PAID">Paid</SelectItem>
                       <SelectItem value="CANCELLED">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>

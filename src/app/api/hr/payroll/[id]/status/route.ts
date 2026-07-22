@@ -7,6 +7,8 @@ import {
   reversePayrollPostings,
 } from "@/lib/ledger/postings";
 
+const APPROVER_ROLES = ["OWNER", "ADMIN", "ACCOUNTANT"];
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,8 +23,10 @@ export async function PUT(
     const body = await request.json();
     const { status } = body;
 
+    // DRAFT -> PENDING_APPROVAL happens via PUT .../process. This endpoint
+    // only handles the approval itself onward.
     const validTransitions: Record<string, string[]> = {
-      DRAFT: ["PROCESSED", "CANCELLED"],
+      PENDING_APPROVAL: ["PROCESSED", "CANCELLED"],
       PROCESSED: ["PAID", "CANCELLED"],
     };
 
@@ -41,10 +45,25 @@ export async function PUT(
       );
     }
 
+    if (status === "PROCESSED") {
+      if (!APPROVER_ROLES.includes(user.role)) {
+        return NextResponse.json(
+          { error: "Only an owner, admin, or accountant can approve payroll." },
+          { status: 403 }
+        );
+      }
+      if (user.id === run.processedById) {
+        return NextResponse.json(
+          { error: "Payroll must be approved by someone other than whoever ran it." },
+          { status: 403 }
+        );
+      }
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const updated = await tx.payrollRun.update({
         where: { id },
-        data: { status },
+        data: status === "PROCESSED" ? { status, approvedById: user.id } : { status },
       });
 
       if (status === "PROCESSED") {
@@ -58,6 +77,17 @@ export async function PUT(
           postedById: user.id,
         });
       }
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: user.tenantId,
+          userId: user.id,
+          action: "status_change",
+          entityType: "payroll_run",
+          entityId: id,
+          changes: { status, previousStatus: run.status },
+        },
+      });
 
       return updated;
     });

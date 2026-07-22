@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Scale, Landmark, TrendingUp, BookText, Receipt, LineChart } from "lucide-react";
+import { Scale, Landmark, TrendingUp, BookText, Receipt, LineChart, Banknote } from "lucide-react";
 
 const reports = [
   {
@@ -28,6 +28,12 @@ const reports = [
     title: "Journal Entries",
     description: "Every entry posted to the ledger, with drill-down detail.",
     icon: BookText,
+  },
+  {
+    href: "/reports/currency-exposure",
+    title: "Currency Exposure",
+    description: "Foreign-currency balances translated at today's rate vs. the rate posted.",
+    icon: Banknote,
   },
   {
     href: "/reports/vat-return",

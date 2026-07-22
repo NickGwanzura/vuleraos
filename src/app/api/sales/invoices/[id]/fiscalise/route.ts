@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
 import { postInvoiceFiscalised } from "@/lib/ledger/postings";
+import { nextSequenceNumber } from "@/lib/sequence";
 
 export async function PUT(
   _request: NextRequest,
@@ -56,19 +57,12 @@ export async function PUT(
       );
     }
 
-    // Generate fiscal receipt number
     const year = new Date().getFullYear();
-    const fiscalCount = await prisma.salesInvoice.count({
-      where: {
-        tenantId: user.tenantId,
-        isFiscalised: true,
-        fiscalReceiptNumber: { startsWith: `F${year}` },
-      },
-    });
-
-    const fiscalReceiptNumber = `F${year}-${String(fiscalCount + 1).padStart(6, "0")}`;
 
     const updated = await prisma.$transaction(async (tx) => {
+      const seq = await nextSequenceNumber(tx, user.tenantId, "fiscal_receipt", year);
+      const fiscalReceiptNumber = `F${year}-${String(seq).padStart(6, "0")}`;
+
       const updated = await tx.salesInvoice.update({
         where: { id },
         data: {
@@ -102,7 +96,7 @@ export async function PUT(
       id: updated.id,
       status: updated.status,
       isFiscalised: true,
-      fiscalReceiptNumber,
+      fiscalReceiptNumber: updated.fiscalReceiptNumber,
     });
   } catch (error) {
     console.error("Error fiscalising invoice:", error);

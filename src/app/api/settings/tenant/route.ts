@@ -31,6 +31,15 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
 
+    const changingAccountingControls =
+      body.periodLockDate !== undefined || body.poApprovalThreshold !== undefined;
+    if (changingAccountingControls && !["OWNER", "ACCOUNTANT"].includes(user.role)) {
+      return NextResponse.json(
+        { error: "Only an owner or accountant can change the period lock date or approval threshold." },
+        { status: 403 }
+      );
+    }
+
     const tenant = await prisma.tenant.update({
       where: { id: user.tenantId },
       data: {
@@ -39,6 +48,18 @@ export async function PUT(request: Request) {
         bpNumber: body.bpNumber !== undefined ? body.bpNumber : undefined,
         registrationNumber: body.registrationNumber !== undefined ? body.registrationNumber : undefined,
         defaultCurrency: body.defaultCurrency ?? undefined,
+        periodLockDate:
+          body.periodLockDate !== undefined
+            ? body.periodLockDate
+              ? new Date(body.periodLockDate)
+              : null
+            : undefined,
+        poApprovalThreshold:
+          body.poApprovalThreshold !== undefined
+            ? body.poApprovalThreshold === null || body.poApprovalThreshold === ""
+              ? null
+              : Number(body.poApprovalThreshold)
+            : undefined,
       },
     });
 

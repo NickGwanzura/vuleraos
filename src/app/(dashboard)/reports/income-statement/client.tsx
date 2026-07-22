@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Search } from "lucide-react";
+import { TrendingUp, Search, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 interface IncomeRow {
@@ -30,6 +30,32 @@ export function IncomeStatementReport() {
   const [to, setTo] = useState(new Date().toISOString().split("T")[0]);
   const [data, setData] = useState<IncomeStatementData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [closingYear, setClosingYear] = useState(String(new Date().getFullYear() - 1));
+  const [closing, setClosing] = useState(false);
+
+  async function handleCloseYear() {
+    if (!confirm(`Close fiscal year ${closingYear}? This locks all postings on or before Dec 31, ${closingYear}.`)) {
+      return;
+    }
+    setClosing(true);
+    try {
+      const res = await fetch("/api/ledger/close-year", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year: Number(closingYear) }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        toast.error(d.error || "Failed to close year");
+        return;
+      }
+      toast.success(`${closingYear} closed — entry ${d.entryNumber}`);
+    } catch {
+      toast.error("An error occurred");
+    } finally {
+      setClosing(false);
+    }
+  }
 
   async function loadReport() {
     setLoading(true);
@@ -131,6 +157,36 @@ export function IncomeStatementReport() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Lock className="h-4 w-4" /> Close Fiscal Year
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            Zeroes income and expense accounts for the year into Retained Earnings and locks all
+            postings on or before December 31 of that year. Owner/accountant only, and cannot be
+            undone through the app.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="closingYear">Year</Label>
+              <Input
+                id="closingYear"
+                type="number"
+                value={closingYear}
+                onChange={(e) => setClosingYear(e.target.value)}
+                className="w-[120px]"
+              />
+            </div>
+            <Button variant="outline" onClick={handleCloseYear} disabled={closing}>
+              {closing ? "Closing..." : "Close Fiscal Year"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

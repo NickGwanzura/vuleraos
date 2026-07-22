@@ -23,6 +23,7 @@ interface PayrollListProps { runs: PayrollRun[] }
 function getStatusBadge(status: string): string {
   const m: Record<string, string> = {
     DRAFT: "bg-muted text-muted-foreground",
+    PENDING_APPROVAL: "bg-amber-100 text-amber-800",
     PROCESSED: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
     PAID: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
     CANCELLED: "bg-gray-100 text-gray-500",

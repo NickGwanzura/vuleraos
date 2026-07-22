@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { nextSequenceNumber } from "@/lib/sequence";
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,15 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "At least one line item is required" }, { status: 400 });
     }
 
-    // Generate invoice number
     const year = new Date().getFullYear();
-    const count = await prisma.salesInvoice.count({
-      where: {
-        tenantId: user.tenantId,
-        invoiceNumber: { startsWith: `INV-${year}-` },
-      },
-    });
-    const invoiceNumber = `INV-${year}-${String(count + 1).padStart(4, "0")}`;
 
     // Calculate totals
     let subtotal = 0;
@@ -123,6 +116,9 @@ export async function POST(request: Request) {
 
     // Create invoice with items in a transaction
     const invoice = await prisma.$transaction(async (tx) => {
+      const seq = await nextSequenceNumber(tx, user.tenantId, "invoice", year);
+      const invoiceNumber = `INV-${year}-${String(seq).padStart(4, "0")}`;
+
       const inv = await tx.salesInvoice.create({
         data: {
           tenantId: user.tenantId,
