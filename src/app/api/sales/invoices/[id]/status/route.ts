@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { reverseInvoicePostings, reversePaymentPostings } from "@/lib/ledger/postings";
 
 export async function PUT(
   request: NextRequest,
@@ -39,16 +40,38 @@ export async function PUT(
       );
     }
 
-    // When marking as PAID, set amountPaid = total
-    const updateData: any = { status };
     if (status === "PAID") {
-      updateData.amountPaid = Number(invoice.total);
-      updateData.balanceDue = 0;
+      return NextResponse.json(
+        {
+          error: "An invoice can only be marked PAID by recording a payment against it.",
+        },
+        { status: 400 }
+      );
     }
 
-    const updated = await prisma.salesInvoice.update({
-      where: { id },
-      data: updateData,
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.salesInvoice.update({
+        where: { id },
+        data: { status },
+      });
+
+      if (status === "CANCELLED") {
+        await reverseInvoicePostings(tx, {
+          tenantId: user.tenantId,
+          invoiceId: id,
+          postedById: user.id,
+        });
+        const payments = await tx.payment.findMany({ where: { invoiceId: id } });
+        for (const payment of payments) {
+          await reversePaymentPostings(tx, {
+            tenantId: user.tenantId,
+            paymentId: payment.id,
+            postedById: user.id,
+          });
+        }
+      }
+
+      return updated;
     });
 
     return NextResponse.json({

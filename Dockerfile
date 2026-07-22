@@ -36,6 +36,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN chmod +x ./docker-entrypoint.sh
 
 USER nextjs
 
@@ -43,4 +46,4 @@ EXPOSE 3000
 
 ENV PORT=3000
 
-CMD ["npm", "run", "start"]
+CMD ["./docker-entrypoint.sh"]

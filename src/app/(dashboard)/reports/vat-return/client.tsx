@@ -16,6 +16,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Download, Search, FileText, DollarSign } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
+
+const USD = { code: "USD", symbol: "$" };
 
 interface VatReturnData {
   period: { from: string; to: string };
@@ -114,14 +117,14 @@ export function VATReturnReport() {
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm">Output VAT (Sales)</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-blue-600">${data.summary.outputVatDue.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(data.summary.outputVatDue, USD)}</p>
                 <p className="text-xs text-muted-foreground">{data.outputVat.count} invoices</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm">Input VAT (Purchases)</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">${data.summary.inputVatDeductible.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(data.summary.inputVatDeductible, USD)}</p>
                 <p className="text-xs text-muted-foreground">{data.inputVat.count} orders</p>
               </CardContent>
             </Card>
@@ -129,7 +132,7 @@ export function VATReturnReport() {
               <CardHeader className="pb-2"><CardTitle className="text-sm">Net VAT Due</CardTitle></CardHeader>
               <CardContent>
                 <p className={`text-2xl font-bold ${data.summary.netVatDue > 0 ? "text-red-600" : "text-green-600"}`}>
-                  ${data.summary.netVatDue.toFixed(2)}
+                  {formatCurrency(data.summary.netVatDue, USD)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Period: {new Date(data.period.from).toLocaleDateString("en-ZW")} — {new Date(data.period.to).toLocaleDateString("en-ZW")}
@@ -162,8 +165,8 @@ export function VATReturnReport() {
                       <TableCell className="text-muted-foreground">
                         {new Date(inv.issueDate).toLocaleDateString("en-ZW")}
                       </TableCell>
-                      <TableCell className="text-right">${inv.total.toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-medium">${inv.vatAmount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(inv.total, USD)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(inv.vatAmount, USD)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -178,16 +181,16 @@ export function VATReturnReport() {
                 <div className="w-72 space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Output VAT</span>
-                    <span className="font-medium">${data.summary.outputVatDue.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(data.summary.outputVatDue, USD)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Less Input VAT</span>
-                    <span className="font-medium">(${data.summary.inputVatDeductible.toFixed(2)})</span>
+                    <span className="font-medium">({formatCurrency(data.summary.inputVatDeductible, USD)})</span>
                   </div>
                   <div className="flex justify-between font-bold text-base border-t pt-1">
                     <span>Net VAT Payable</span>
                     <span className={data.summary.netVatDue > 0 ? "text-red-600" : "text-green-600"}>
-                      ${data.summary.netVatDue.toFixed(2)}
+                      {formatCurrency(data.summary.netVatDue, USD)}
                     </span>
                   </div>
                 </div>

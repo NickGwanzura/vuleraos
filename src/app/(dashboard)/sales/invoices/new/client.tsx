@@ -29,6 +29,7 @@ import {
 import { ArrowLeft, Save, Plus, Trash2, Search } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 interface Customer {
   id: string;
@@ -141,6 +142,7 @@ export function InvoiceCreateForm({ customers, currencies }: InvoiceCreateFormPr
     0
   );
   const grandTotal = subtotal + totalVat;
+  const selectedCurrency = currencies.find((c) => c.id === form.currencyId) ?? null;
 
   const filteredCustomers = customers.filter(
     (c) =>
@@ -440,7 +442,7 @@ export function InvoiceCreateForm({ customers, currencies }: InvoiceCreateFormPr
                                     >
                                       <span>{result.name}</span>
                                       <span className="text-muted-foreground text-xs">
-                                        {result.sku} — {result.currency?.symbol}{result.defaultPrice?.toFixed(2)}
+                                        {result.sku} — {result.defaultPrice != null && formatCurrency(result.defaultPrice, result.currency)}
                                       </span>
                                     </button>
                                   ))}
@@ -482,7 +484,7 @@ export function InvoiceCreateForm({ customers, currencies }: InvoiceCreateFormPr
                             />
                           </td>
                           <td className="py-2 pl-2 text-right font-medium">
-                            {lineTotal.toFixed(2)}
+                            {formatCurrency(lineTotal, selectedCurrency)}
                           </td>
                           <td className="py-2 pl-1">
                             <button
@@ -511,15 +513,15 @@ export function InvoiceCreateForm({ customers, currencies }: InvoiceCreateFormPr
                 <div className="w-64 space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>{subtotal.toFixed(2)}</span>
+                    <span>{formatCurrency(subtotal, selectedCurrency)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT</span>
-                    <span>{totalVat.toFixed(2)}</span>
+                    <span>{formatCurrency(totalVat, selectedCurrency)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-base border-t pt-1">
                     <span>Total</span>
-                    <span>{grandTotal.toFixed(2)}</span>
+                    <span>{formatCurrency(grandTotal, selectedCurrency)}</span>
                   </div>
                 </div>
               </div>
@@ -561,15 +563,15 @@ export function InvoiceCreateForm({ customers, currencies }: InvoiceCreateFormPr
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>{subtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(subtotal, selectedCurrency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">VAT ({form.vatRate}%)</span>
-                  <span>{totalVat.toFixed(2)}</span>
+                  <span>{formatCurrency(totalVat, selectedCurrency)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-base border-t pt-1">
                   <span>Grand Total</span>
-                  <span>{grandTotal.toFixed(2)}</span>
+                  <span>{formatCurrency(grandTotal, selectedCurrency)}</span>
                 </div>
               </div>
             </div>

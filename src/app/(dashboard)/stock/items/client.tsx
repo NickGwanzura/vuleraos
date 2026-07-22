@@ -29,6 +29,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/currency";
 
 interface Category {
   id: string;
@@ -327,7 +328,7 @@ export function ItemsList({ items, categories }: ItemsListProps) {
                     </TableCell>
                     <TableCell className="text-right hidden md:table-cell">
                       {item.defaultPrice !== null
-                        ? `${item.currency?.symbol || "$"}${item.defaultPrice.toFixed(2)}`
+                        ? formatCurrency(item.defaultPrice, item.currency)
                         : "—"}
                     </TableCell>
                   </TableRow>

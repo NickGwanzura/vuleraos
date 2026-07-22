@@ -36,6 +36,8 @@ model Tenant {
   auditLogs          AuditLog[]
   notifications      Notification[]
   documentTemplates  DocumentTemplate[]
+  ledgerAccounts     LedgerAccount[]
+  journalEntries     JournalEntry[]
 
   @@map("tenants")
 }
@@ -78,6 +80,7 @@ model User {
   auditLogs       AuditLog[]
   notifications   Notification[]
   createdPayments Payment[]
+  postedJournalEntries JournalEntry[]
 
   @@unique([tenantId, email])
   @@map("users")
@@ -160,6 +163,7 @@ model Currency {
   employees        Employee[]
   payrollRuns      PayrollRun[]
   payrollItems     PayrollItem[]
+  journalLines     JournalLine[]
 
   @@unique([tenantId, code])
   @@map("currencies")
@@ -188,6 +192,7 @@ model ExchangeRate {
   purchaseOrderItems PurchaseOrderItem[]
   stockTransactions StockTransaction[]
   payments     Payment[]
+  journalLines JournalLine[]
 
   @@index([tenantId, fromCurrencyId, toCurrencyId, effectiveDate])
   @@map("exchange_rates")
@@ -217,6 +222,7 @@ model BusinessPartner {
   currency      Currency?      @relation(fields: [currencyId], references: [id])
   salesInvoices SalesInvoice[]
   purchaseOrders PurchaseOrder[]
+  journalLines  JournalLine[]
 
   @@index([tenantId, partnerType])
   @@map("business_partners")
@@ -584,6 +590,98 @@ model PayrollItem {
   currency   Currency   @relation(fields: [currencyId], references: [id])
 
   @@map("payroll_items")
+}
+
+// ============ GENERAL LEDGER ============
+
+model LedgerAccount {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @db.Uuid
+  code            String
+  name            String
+  type            AccountType
+  parentId        String?     @db.Uuid
+  isSystemAccount Boolean     @default(false)
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent       LedgerAccount?  @relation("LedgerAccountHierarchy", fields: [parentId], references: [id])
+  children     LedgerAccount[] @relation("LedgerAccountHierarchy")
+  journalLines JournalLine[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, type])
+  @@map("ledger_accounts")
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+
+  @@map("account_type")
+}
+
+model JournalEntry {
+  id           String             @id @default(uuid()) @db.Uuid
+  tenantId     String             @db.Uuid
+  entryNumber  String
+  entryDate    DateTime           @default(now())
+  memo         String?
+  sourceType   String // sales_invoice, payment, purchase_order, payroll_run, reversal, manual
+  sourceId     String?            @db.Uuid
+  status       JournalEntryStatus @default(POSTED)
+  reversalOfId String?            @db.Uuid
+  postedById   String             @db.Uuid
+  createdAt    DateTime           @default(now())
+
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  postedBy   User           @relation(fields: [postedById], references: [id])
+  reversalOf JournalEntry?  @relation("JournalReversal", fields: [reversalOfId], references: [id])
+  reversedBy JournalEntry[] @relation("JournalReversal")
+  lines      JournalLine[]
+
+  @@unique([tenantId, entryNumber])
+  @@index([tenantId, entryDate])
+  @@index([tenantId, sourceType, sourceId])
+  @@map("journal_entries")
+}
+
+enum JournalEntryStatus {
+  POSTED
+  REVERSED
+
+  @@map("journal_entry_status")
+}
+
+model JournalLine {
+  id                String   @id @default(uuid()) @db.Uuid
+  journalEntryId    String   @db.Uuid
+  accountId         String   @db.Uuid
+  // Amounts are in this line's own currencyId (the source transaction's
+  // currency) — the ledger is per-currency for now. Consolidating multiple
+  // currencies into one base-currency trial balance is FX revaluation work,
+  // deferred to a later phase.
+  debit             Decimal  @default(0) @db.Decimal(18, 2)
+  credit            Decimal  @default(0) @db.Decimal(18, 2)
+  currencyId        String   @db.Uuid
+  exchangeRateId    String?  @db.Uuid
+  businessPartnerId String?  @db.Uuid
+  description       String?
+
+  journalEntry    JournalEntry     @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account         LedgerAccount    @relation(fields: [accountId], references: [id])
+  currency        Currency         @relation(fields: [currencyId], references: [id])
+  exchangeRate    ExchangeRate?    @relation(fields: [exchangeRateId], references: [id])
+  businessPartner BusinessPartner? @relation(fields: [businessPartnerId], references: [id])
+
+  @@index([accountId])
+  @@index([businessPartnerId])
+  @@map("journal_lines")
 }
 
 // ============ ZIMRA COMPLIANCE ============

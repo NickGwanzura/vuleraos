@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeftRight, CheckCircle, XCircle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 interface Payment {
   id: string;
@@ -106,7 +107,7 @@ export function ReconciliationView({ unmatchedPayments, unpaidInvoices }: Reconc
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-sm font-medium">{p.currency.symbol}{p.amount.toFixed(2)}</p>
+                      <p className="text-sm font-medium">{formatCurrency(p.amount, p.currency)}</p>
                       <p className="text-xs text-muted-foreground">{p.paymentMethod.replace("_", " ")}</p>
                       {p.referenceNumber && (
                         <p className="text-xs text-muted-foreground font-mono">Ref: {p.referenceNumber}</p>
@@ -147,7 +148,7 @@ export function ReconciliationView({ unmatchedPayments, unpaidInvoices }: Reconc
                       <p className="text-xs text-muted-foreground">{inv.customer.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-amber-600">{inv.currency.symbol}{inv.balanceDue.toFixed(2)}</p>
+                      <p className="text-sm font-medium text-amber-600">{formatCurrency(inv.balanceDue, inv.currency)}</p>
                       <p className="text-xs text-muted-foreground">Due {formatDate(inv.dueDate)}</p>
                     </div>
                   </div>

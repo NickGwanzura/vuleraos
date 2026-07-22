@@ -24,17 +24,17 @@ export function formatCurrency(
   amount: number,
   currency: { code: string; symbol: string } | null | undefined
 ): string {
-  if (!currency) return `$${amount.toFixed(2)}`;
-  
   const formatted = amount.toLocaleString("en-ZW", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
+  if (!currency) return `$${formatted}`;
+
   if (currency.code === "USD") {
     return `${currency.symbol}${formatted}`;
   }
-  
+
   // ZWG and others
   return `${currency.symbol} ${formatted}`;
 }

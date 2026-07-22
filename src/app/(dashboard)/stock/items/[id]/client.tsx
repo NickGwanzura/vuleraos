@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 interface Item {
   id: string;
@@ -396,7 +397,7 @@ export function ItemDetail({
               <div className="text-center p-3 bg-muted/30 rounded-lg">
                 <p className="text-2xl font-bold">
                   {item.defaultPrice !== null
-                    ? `${item.currency?.symbol || "$"}${item.defaultPrice.toFixed(2)}`
+                    ? formatCurrency(item.defaultPrice, item.currency)
                     : "—"}
                 </p>
                 <p className="text-xs text-muted-foreground">Selling Price</p>
@@ -560,7 +561,7 @@ export function ItemDetail({
                   </p>
                   <p className="text-sm">
                     {item.costPrice !== null
-                      ? `${item.currency?.symbol || "$"}${item.costPrice.toFixed(2)}`
+                      ? formatCurrency(item.costPrice, item.currency)
                       : "—"}
                   </p>
                 </div>
@@ -657,7 +658,7 @@ export function ItemDetail({
                       </TableCell>
                       <TableCell className="text-right hidden md:table-cell">
                         {tx.unitCost !== null
-                          ? `${tx.currency?.symbol || "$"}${tx.unitCost.toFixed(2)}`
+                          ? formatCurrency(tx.unitCost, tx.currency)
                           : "—"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">

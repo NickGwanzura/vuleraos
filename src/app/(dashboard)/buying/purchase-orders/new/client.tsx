@@ -26,6 +26,7 @@ import {
 import { ArrowLeft, Save, Plus, Trash2, Search } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 interface Supplier {
   id: string;
@@ -82,6 +83,7 @@ export function POCreateForm({ suppliers, currencies }: POCreateFormProps) {
   const [itemSearchQuery, setItemSearchQuery] = useState("");
 
   const subtotal = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const selectedCurrency = currencies.find((c) => c.id === form.currencyId) ?? null;
 
   function update(field: string, value: string) {
     setForm((p) => ({ ...p, [field]: value }));
@@ -312,7 +314,7 @@ export function POCreateForm({ suppliers, currencies }: POCreateFormProps) {
                             <Input type="number" min="0" step="0.01" value={item.unitPrice}
                               onChange={(e) => updateItem(item.key, "unitPrice", Number(e.target.value) || 0)} className="h-8 text-sm text-right" />
                           </td>
-                          <td className="py-2 pl-2 text-right font-medium">{lineTotal.toFixed(2)}</td>
+                          <td className="py-2 pl-2 text-right font-medium">{formatCurrency(lineTotal, selectedCurrency)}</td>
                           <td className="py-2 pl-1">
                             <button type="button" onClick={() => removeItem(item.key)} className="text-muted-foreground hover:text-destructive p-1" disabled={lineItems.length <= 1}>
                               <Trash2 className="h-3.5 w-3.5" />
@@ -327,8 +329,8 @@ export function POCreateForm({ suppliers, currencies }: POCreateFormProps) {
               <Button variant="outline" size="sm" onClick={addItem} type="button"><Plus className="h-4 w-4 mr-1" /> Add Line Item</Button>
               <div className="border-t pt-4 flex justify-end">
                 <div className="w-64 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{subtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between font-bold text-base border-t pt-1"><span>Total</span><span>{subtotal.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal, selectedCurrency)}</span></div>
+                  <div className="flex justify-between font-bold text-base border-t pt-1"><span>Total</span><span>{formatCurrency(subtotal, selectedCurrency)}</span></div>
                 </div>
               </div>
             </div>

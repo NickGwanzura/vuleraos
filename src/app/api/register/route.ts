@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma/client";
+import { DEFAULT_CHART_OF_ACCOUNTS } from "@/lib/ledger/accounts";
 
 export async function POST(request: Request) {
   try {
@@ -77,6 +78,16 @@ export async function POST(request: Request) {
           role: "OWNER",
           onboardingCompleted: false,
         },
+      });
+
+      await tx.ledgerAccount.createMany({
+        data: DEFAULT_CHART_OF_ACCOUNTS.map((account) => ({
+          tenantId: tenant.id,
+          code: account.code,
+          name: account.name,
+          type: account.type,
+          isSystemAccount: true,
+        })),
       });
 
       return { tenant, user };

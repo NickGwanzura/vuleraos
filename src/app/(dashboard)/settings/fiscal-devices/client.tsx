@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ArrowLeft, Save, Printer, Building2, DollarSign, Plus, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Save, Printer, Building2, DollarSign, Plus, CheckCircle, XCircle, Landmark } from "lucide-react";
 
 interface FiscalDevice {
   id: string;
@@ -63,6 +63,7 @@ export function FiscalDevicesSettings({ devices }: FiscalDevicesSettingsProps) {
     { label: "General", href: "/settings", icon: Building2 },
     { label: "Currency", href: "/settings/currency", icon: DollarSign },
     { label: "Fiscal Devices", href: "/settings/fiscal-devices", icon: Printer, active: true },
+    { label: "Chart of Accounts", href: "/settings/chart-of-accounts", icon: Landmark },
   ];
 
   return (

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Save, FileText, Building2, DollarSign, Printer } from "lucide-react";
+import { ArrowLeft, Save, FileText, Building2, DollarSign, Printer, Landmark } from "lucide-react";
 import Link from "next/link";
 
 interface DocumentSettingsProps {
@@ -45,6 +45,7 @@ export function DocumentSettings({ tenant, template }: DocumentSettingsProps) {
     { label: "Currency", href: "/settings/currency", icon: DollarSign },
     { label: "Fiscal Devices", href: "/settings/fiscal-devices", icon: Printer },
     { label: "Documents", href: "/settings/documents", icon: FileText, active: true },
+    { label: "Chart of Accounts", href: "/settings/chart-of-accounts", icon: Landmark },
   ];
 
   return (

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { DEFAULT_CHART_OF_ACCOUNTS } from "../src/lib/ledger/accounts";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,22 @@ const DEMO_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 const DEMO_OWNER_ID = "00000000-0000-4000-8000-000000000002";
 const DEMO_CASHIER_ID = "00000000-0000-4000-8000-000000000003";
 const DEMO_ACCOUNTANT_ID = "00000000-0000-4000-8000-000000000004";
+
+async function seedChartOfAccounts(tenantId: string) {
+  for (const account of DEFAULT_CHART_OF_ACCOUNTS) {
+    await prisma.ledgerAccount.upsert({
+      where: { tenantId_code: { tenantId, code: account.code } },
+      update: {},
+      create: {
+        tenantId,
+        code: account.code,
+        name: account.name,
+        type: account.type,
+        isSystemAccount: true,
+      },
+    });
+  }
+}
 
 async function main() {
   console.log("🌱 Seeding VuleraOS database...");
@@ -54,6 +71,9 @@ async function main() {
   });
 
   console.log("✓ Created currencies: USD, ZWG");
+
+  await seedChartOfAccounts(tenant.id);
+  console.log(`✓ Seeded chart of accounts (${DEFAULT_CHART_OF_ACCOUNTS.length} accounts)`);
 
   // Create demo owner user
   const passwordHash = await bcrypt.hash("password123", 12);

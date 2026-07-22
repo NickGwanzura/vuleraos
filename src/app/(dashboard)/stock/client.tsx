@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Plus, AlertTriangle, ArrowUpRight, FileText } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/currency";
 
 interface RecentItem {
   id: string;
@@ -14,7 +15,7 @@ interface RecentItem {
   minimumStock: number | null;
   defaultPrice: number | null;
   category: { name: string } | null;
-  currency: { symbol: string } | null;
+  currency: { code: string; symbol: string } | null;
 }
 
 interface StockWorkspaceProps {
@@ -181,8 +182,7 @@ export function StockWorkspace({ metrics, recentItems }: StockWorkspaceProps) {
                     {item.defaultPrice !== null && (
                       <div className="text-right hidden sm:block">
                         <p className="text-sm">
-                          {item.currency?.symbol}
-                          {item.defaultPrice.toFixed(2)}
+                          {formatCurrency(item.defaultPrice, item.currency)}
                         </p>
                         <p className="text-xs text-muted-foreground">price</p>
                       </div>

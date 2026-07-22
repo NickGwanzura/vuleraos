@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 interface POItem {
   id: string;
@@ -266,8 +267,8 @@ export function PODetail({ po }: PODetailProps) {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-3"><DollarSign className="h-4 w-4 text-muted-foreground" /><h3 className="text-sm font-medium">Order Summary</h3></div>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{po.currency.symbol}{po.subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between font-bold border-t pt-1"><span>Total</span><span>{po.currency.symbol}{po.total.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(po.subtotal, po.currency)}</span></div>
+              <div className="flex justify-between font-bold border-t pt-1"><span>Total</span><span>{formatCurrency(po.total, po.currency)}</span></div>
               <div className="pt-2 text-xs text-muted-foreground">Currency: {po.currency.code}</div>
             </div>
           </CardContent>
@@ -316,8 +317,8 @@ export function PODetail({ po }: PODetailProps) {
                       {item.item && <p className="text-xs text-muted-foreground">{item.item.sku}</p>}
                     </TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{po.currency.symbol}{item.unitPrice.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-medium">{po.currency.symbol}{item.lineTotal.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.unitPrice, po.currency)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(item.lineTotal, po.currency)}</TableCell>
                     <TableCell className="text-right text-green-600">{item.quantityReceived}</TableCell>
                     <TableCell className="text-right">{remaining > 0 ? <span className="text-amber-600">{remaining}</span> : <span className="text-green-600">—</span>}</TableCell>
                   </TableRow>
@@ -332,11 +333,11 @@ export function PODetail({ po }: PODetailProps) {
         <div className="w-72 space-y-1">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>{po.currency.symbol}{po.subtotal.toFixed(2)}</span>
+            <span>{formatCurrency(po.subtotal, po.currency)}</span>
           </div>
           <div className="flex justify-between font-bold text-base border-t pt-1">
             <span>Total</span>
-            <span>{po.currency.symbol}{po.total.toLocaleString("en-ZW", { minimumFractionDigits: 2 })}</span>
+            <span>{formatCurrency(po.total, po.currency)}</span>
           </div>
           {po.notes && (
             <div className="border-t pt-2 mt-2">

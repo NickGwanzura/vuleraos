@@ -46,6 +46,7 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { formatDocumentHTML, openPrintWindow } from "@/lib/print";
+import { formatCurrency } from "@/lib/currency";
 
 interface InvoiceItem {
   id: string;
@@ -400,11 +401,11 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">
-                    {invoice.currency.symbol}{item.unitPrice.toFixed(2)}
+                    {formatCurrency(item.unitPrice, invoice.currency)}
                   </TableCell>
                   <TableCell className="text-right">{item.vatRate}%</TableCell>
                   <TableCell className="text-right font-medium">
-                    {invoice.currency.symbol}{item.lineTotal.toFixed(2)}
+                    {formatCurrency(item.lineTotal, invoice.currency)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -418,15 +419,15 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
         <div className="w-72 space-y-1">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>{invoice.currency.symbol}{invoice.subtotal.toFixed(2)}</span>
+            <span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">VAT ({invoice.vatRate}%)</span>
-            <span>{invoice.currency.symbol}{invoice.vatAmount.toFixed(2)}</span>
+            <span>{formatCurrency(invoice.vatAmount, invoice.currency)}</span>
           </div>
           <div className="flex justify-between font-bold text-base border-t pt-1">
             <span>Total</span>
-            <span>{invoice.currency.symbol}{invoice.total.toLocaleString("en-ZW", { minimumFractionDigits: 2 })}</span>
+            <span>{formatCurrency(invoice.total, invoice.currency)}</span>
           </div>
           {invoice.notes && (
             <div className="border-t pt-2 mt-2">
@@ -464,7 +465,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     <TableCell>{p.paymentMethod.replace("_", " ")}</TableCell>
                     <TableCell className="text-xs font-mono">{p.referenceNumber || "—"}</TableCell>
                     <TableCell className="text-right font-medium">
-                      {p.currency.symbol}{p.amount.toFixed(2)}
+                      {formatCurrency(p.amount, p.currency)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={p.isReconciled ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>

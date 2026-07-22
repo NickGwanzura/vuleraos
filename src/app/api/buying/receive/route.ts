@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { postGoodsReceipt } from "@/lib/ledger/postings";
 
 export async function POST(request: Request) {
   try {
@@ -77,6 +78,20 @@ export async function POST(request: Request) {
           where: { id: poItem.itemId! },
           data: { currentStock: { increment: qty } },
         });
+
+        await postGoodsReceipt(
+          tx,
+          {
+            tenantId: user.tenantId,
+            purchaseOrderId,
+            supplierId: po.supplierId,
+            currencyId: poItem.currencyId,
+            exchangeRateId: poItem.exchangeRateId,
+            quantity: qty,
+            unitCost: Number(poItem.unitPrice),
+          },
+          user.id
+        );
       }
 
       // Determine new PO status

@@ -27,7 +27,7 @@ export default async function StockPage() {
       take: 5,
       include: {
         category: { select: { name: true } },
-        currency: { select: { symbol: true } },
+        currency: { select: { code: true, symbol: true } },
       },
     }),
   ]);

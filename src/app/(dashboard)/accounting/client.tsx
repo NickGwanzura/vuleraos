@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/currency";
 import {
   BookOpen,
   Plus,
@@ -146,7 +147,7 @@ export function AccountingWorkspace({ metrics, recentPayments }: AccountingWorks
                   </div>
                   <div className="flex items-center gap-3 ml-4">
                     <div className="text-right">
-                      <p className="text-sm font-medium">{p.currency.symbol}{p.amount.toFixed(2)}</p>
+                      <p className="text-sm font-medium">{formatCurrency(p.amount, p.currency)}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(p.receivedAt)}</p>
                     </div>
                     {p.isReconciled ? (

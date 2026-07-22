@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ArrowLeft, Save, DollarSign, Building2, Printer, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Save, DollarSign, Building2, Printer, ArrowUpDown, Landmark } from "lucide-react";
 
 interface Rate {
   id: string;
@@ -93,6 +93,7 @@ export function CurrencySettings({ rates, currencies }: CurrencySettingsProps) {
     { label: "General", href: "/settings", icon: Building2 },
     { label: "Currency", href: "/settings/currency", icon: DollarSign, active: true },
     { label: "Fiscal Devices", href: "/settings/fiscal-devices", icon: Printer },
+    { label: "Chart of Accounts", href: "/settings/chart-of-accounts", icon: Landmark },
   ];
 
   return (

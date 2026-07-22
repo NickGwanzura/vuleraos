@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import {
+  postPayrollAccrual,
+  postPayrollSettlement,
+  reversePayrollPostings,
+} from "@/lib/ledger/postings";
 
 export async function PUT(
   request: NextRequest,
@@ -36,9 +41,25 @@ export async function PUT(
       );
     }
 
-    const updated = await prisma.payrollRun.update({
-      where: { id },
-      data: { status },
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.payrollRun.update({
+        where: { id },
+        data: { status },
+      });
+
+      if (status === "PROCESSED") {
+        await postPayrollAccrual(tx, updated, user.id);
+      } else if (status === "PAID") {
+        await postPayrollSettlement(tx, updated, user.id);
+      } else if (status === "CANCELLED") {
+        await reversePayrollPostings(tx, {
+          tenantId: user.tenantId,
+          payrollRunId: id,
+          postedById: user.id,
+        });
+      }
+
+      return updated;
     });
 
     return NextResponse.json({ id: updated.id, status: updated.status });

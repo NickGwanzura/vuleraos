@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { postInvoiceFiscalised } from "@/lib/ledger/postings";
 
 export async function PUT(
   _request: NextRequest,
@@ -67,30 +68,34 @@ export async function PUT(
 
     const fiscalReceiptNumber = `F${year}-${String(fiscalCount + 1).padStart(6, "0")}`;
 
-    // Mark as fiscalised
-    const updated = await prisma.salesInvoice.update({
-      where: { id },
-      data: {
-        status: "FISCAL",
-        isFiscalised: true,
-        fiscalReceiptNumber,
-      },
-    });
-
-    // Record audit trail
-    await prisma.auditLog.create({
-      data: {
-        tenantId: user.tenantId,
-        userId: user.id,
-        action: "fiscalise",
-        entityType: "sales_invoice",
-        entityId: id,
-        changes: {
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.salesInvoice.update({
+        where: { id },
+        data: {
           status: "FISCAL",
+          isFiscalised: true,
           fiscalReceiptNumber,
-          previousStatus: invoice.status,
         },
-      },
+      });
+
+      await postInvoiceFiscalised(tx, updated, user.id);
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: user.tenantId,
+          userId: user.id,
+          action: "fiscalise",
+          entityType: "sales_invoice",
+          entityId: id,
+          changes: {
+            status: "FISCAL",
+            fiscalReceiptNumber,
+            previousStatus: invoice.status,
+          },
+        },
+      });
+
+      return updated;
     });
 
     return NextResponse.json({

@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, Search, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
 
 interface Customer {
   id: string;
@@ -177,9 +178,9 @@ export function RecordPaymentForm({ customers, currencies }: { customers: Custom
                         >
                           <div>
                             <p className="text-sm font-medium">{inv.invoiceNumber}</p>
-                            <p className="text-xs text-muted-foreground">Balance: {inv.currency.symbol}{inv.balanceDue.toFixed(2)}</p>
+                            <p className="text-xs text-muted-foreground">Balance: {formatCurrency(inv.balanceDue, inv.currency)}</p>
                           </div>
-                          <Badge variant="outline" className="text-xs">{inv.currency.symbol}{inv.balanceDue.toFixed(2)} due</Badge>
+                          <Badge variant="outline" className="text-xs">{formatCurrency(inv.balanceDue, inv.currency)} due</Badge>
                         </button>
                       ))}
                     </div>
@@ -200,7 +201,7 @@ export function RecordPaymentForm({ customers, currencies }: { customers: Custom
                 <p className="text-sm text-muted-foreground mb-4">
                   Invoice: <strong>{invoices.find((i) => i.id === selectedInvoiceId)?.invoiceNumber}</strong>
                   {selectedInvoice && (
-                    <> — Balance: <span className="text-amber-600">{selectedInvoice?.currency.symbol}{selectedInvoice?.balanceDue.toFixed(2)}</span></>
+                    <> — Balance: <span className="text-amber-600">{selectedInvoice && formatCurrency(selectedInvoice.balanceDue, selectedInvoice.currency)}</span></>
                   )}
                 </p>
               </div>
@@ -211,7 +212,7 @@ export function RecordPaymentForm({ customers, currencies }: { customers: Custom
                   value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
                 {selectedInvoice && (
                   <p className="text-xs text-muted-foreground">
-                    Outstanding: {selectedInvoice.currency.symbol}{selectedInvoice.balanceDue.toFixed(2)}
+                    Outstanding: {formatCurrency(selectedInvoice.balanceDue, selectedInvoice.currency)}
                   </p>
                 )}
               </div>

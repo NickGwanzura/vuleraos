@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, ArrowUpDown, BookOpen, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/currency";
 
 interface Payment {
   id: string;
@@ -168,7 +169,7 @@ export function PaymentList({ payments }: PaymentListProps) {
                     <TableCell>{p.invoice?.customer.name || "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{p.paymentMethod.replace("_", " ")}</Badge></TableCell>
                     <TableCell className="text-xs font-mono text-muted-foreground">{p.referenceNumber || "—"}</TableCell>
-                    <TableCell className="text-right font-medium">{p.currency.symbol}{p.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(p.amount, p.currency)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {p.isReconciled ? (

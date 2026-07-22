@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma/client";
+import { postPaymentReceived } from "@/lib/ledger/postings";
 
 export async function GET(request: NextRequest) {
   try {
@@ -130,6 +131,12 @@ export async function POST(request: Request) {
           status: invoiceStatus,
         },
       });
+
+      await postPaymentReceived(
+        tx,
+        { ...payment, invoice: { customerId: invoice.customerId } },
+        user.id
+      );
 
       return payment;
     });
